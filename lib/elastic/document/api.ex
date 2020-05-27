@@ -156,16 +156,16 @@ defmodule Elastic.Document.API do
       alias Elastic.Index
       alias Elastic.Query
 
-      def index(id, data, es_index \\ @es_index) do
-        Document.index(es_index, @es_type, id, data)
+      def index(id, data, es_index \\ @es_index, cluster \\ nil) do
+        Document.index(es_index, @es_type, id, data, cluster)
       end
 
-      def update(id, data, es_index \\ @es_index) do
-        Document.update(es_index, @es_type, id, data)
+      def update(id, data, es_index \\ @es_index, cluster \\ nil) do
+        Document.update(es_index, @es_type, id, data, cluster)
       end
 
-      def get(id, es_index \\ @es_index) do
-        case raw_get(id, es_index) do
+      def get(id, es_index \\ @es_index, cluster \\ nil) do
+        case raw_get(id, es_index, cluster) do
           {:ok, 200, %{"_source" => source, "_id" => id}} ->
             into_struct(id, source)
 
@@ -177,16 +177,16 @@ defmodule Elastic.Document.API do
         end
       end
 
-      def delete(id, es_index \\ @es_index) do
-        Document.delete(es_index, @es_type, id)
+      def delete(id, es_index \\ @es_index, cluster \\ nil) do
+        Document.delete(es_index, @es_type, id, cluster)
       end
 
-      def raw_get(id, es_index \\ @es_index) do
-        Document.get(es_index, @es_type, id)
+      def raw_get(id, es_index \\ @es_index, cluster \\ nil) do
+        Document.get(es_index, @es_type, id, cluster)
       end
 
-      def search(query, es_index \\ @es_index) do
-        result = Query.build(es_index, query) |> Index.search()
+      def search(query, es_index \\ @es_index, cluster \\ nil) do
+        result = Query.build(es_index, query) |> Index.search(cluster)
         {:ok, 200, %{"hits" => %{"hits" => hits}}} = result
 
         Enum.map(hits, fn %{"_source" => source, "_id" => id} ->
@@ -194,20 +194,20 @@ defmodule Elastic.Document.API do
         end)
       end
 
-      def raw_search(query, es_index \\ @es_index) do
-        search_query(query, es_index) |> Index.search()
+      def raw_search(query, es_index \\ @es_index, cluster \\ nil) do
+        search_query(query, es_index) |> Index.search(cluster)
       end
 
       def search_query(query, es_index \\ @es_index) do
         Query.build(es_index, query)
       end
 
-      def raw_count(query, es_index \\ @es_index) do
-        Query.build(es_index, query) |> Index.count()
+      def raw_count(query, es_index \\ @es_index, cluster \\ nil) do
+        Query.build(es_index, query) |> Index.count(cluster)
       end
 
-      def count(query) do
-        {:ok, 200, %{"count" => count}} = raw_count(query)
+      def count(query, cluster \\ nil) do
+        {:ok, 200, %{"count" => count}} = raw_count(query, @es_index, cluster)
         count
       end
 

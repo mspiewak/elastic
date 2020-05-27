@@ -50,8 +50,8 @@ defmodule Elastic.Index do
   ```
   """
 
-  def create(index, parameters) do
-    HTTP.post(name(index), body: parameters)
+  def create(index, parameters, cluster \\ nil) do
+    HTTP.post(name(index), body: parameters, cluster: cluster)
   end
 
   @doc """
@@ -68,48 +68,48 @@ defmodule Elastic.Index do
   ```
 
   """
-  def delete(index) do
-    index |> name |> HTTP.delete
+  def delete(index, cluster \\ nil) do
+    index |> name |> HTTP.delete(cluster: cluster)
   end
 
   @doc """
   Refreshes the specified index by issuing a [refresh HTTP call](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-refresh.html).
   """
-  def refresh(index) do
-    HTTP.post("#{name(index)}/_refresh")
+  def refresh(index, cluster \\ nil) do
+    HTTP.post("#{name(index)}/_refresh", cluster: cluster)
   end
 
   @doc """
   Checks if the specified index exists.
   The index name will be automatically prefixed as per this package's configuration.
   """
-  def exists?(index) do
-    {_, status, _} = index |> name |> HTTP.head
+  def exists?(index, cluster \\ nil) do
+    {_, status, _} = index |> name |> HTTP.head(cluster: cluster)
     status == 200
   end
 
   @doc """
   Opens the specified index.
   """
-  def open(index) do
-    HTTP.post("#{name(index)}/_open")
+  def open(index, cluster \\ nil) do
+    HTTP.post("#{name(index)}/_open", cluster: cluster)
   end
 
   @doc """
   Closes the specified index.
   """
-  def close(index) do
-    HTTP.post("#{name(index)}/_close")
+  def close(index, cluster \\ nil) do
+    HTTP.post("#{name(index)}/_close", cluster: cluster)
   end
 
   @doc false
-  def search(%Query{index: index, body: body}) do
-    HTTP.get("#{name(index)}/_search", body: body)
+  def search(%Query{index: index, body: body}, cluster \\ nil) do
+    HTTP.get("#{name(index)}/_search", body: body, cluster: cluster)
   end
 
   @doc false
-  def count(%Query{index: index, body: body}) do
-    HTTP.get("#{name(index)}/_count", body: body)
+  def count(%Query{index: index, body: body}, cluster \\ nil) do
+    HTTP.get("#{name(index)}/_count", body: body, cluster: cluster)
   end
 
   defp index_prefix do

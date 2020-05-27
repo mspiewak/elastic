@@ -4,23 +4,23 @@ defmodule Elastic.Document do
   alias Elastic.HTTP
   alias Elastic.Index
 
-  def index(index, type, id, data) do
-    document_path(index, type, id) |> HTTP.put(body: data)
+  def index(index, type, id, data, cluster \\ nil) do
+    document_path(index, type, id) |> HTTP.put(body: data, cluster: cluster)
   end
 
-  def update(index, type, id, data) do
+  def update(index, type, id, data, cluster \\ nil) do
     data = %{doc: data}
 
     update_path(index, type, id)
-    |> HTTP.post(body: data)
+    |> HTTP.post(body: data, cluster: cluster)
   end
 
-  def get(index, type, id) do
-    document_path(index, type, id) |> HTTP.get()
+  def get(index, type, id, cluster \\ nil) do
+    document_path(index, type, id) |> HTTP.get(cluster: cluster)
   end
 
-  def delete(index, type, id) do
-    document_path(index, type, id) |> HTTP.delete()
+  def delete(index, type, id, cluster \\ nil) do
+    document_path(index, type, id) |> HTTP.delete(cluster: cluster)
   end
 
   defp document_path(index, type, id) do

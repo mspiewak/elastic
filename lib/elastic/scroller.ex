@@ -46,6 +46,7 @@ defmodule Elastic.Scroller do
       |> Map.put_new(:body, %{})
       |> Map.put_new(:size, 100)
       |> Map.put_new(:keepalive, "1m")
+      |> Map.put_new(:cluster, nil)
       |> Map.put(:index, index)
 
     GenServer.start_link(__MODULE__, opts)
@@ -58,13 +59,14 @@ defmodule Elastic.Scroller do
           required(:keepalive) => String.t()
         }) :: {:ok, pid()} | {:stop, String.t()}
   def init(state = %{index: index, body: body, size: size, keepalive: keepalive}) do
+    cluster = Map.get(state, :cluster)
     scroll =
       Scroll.start(%{
         index: index,
         body: body,
         size: size,
         keepalive: keepalive
-      })
+      }, cluster)
 
     case scroll do
       {:ok, 200, %{"_scroll_id" => id, "hits" => %{"hits" => hits}}} ->
@@ -131,6 +133,11 @@ defmodule Elastic.Scroller do
   end
 
   @doc false
+  def cluster(pid) do
+    GenServer.call(pid, :cluster)
+  end
+
+  @doc false
   def clear(pid) do
     GenServer.call(pid, :clear)
   end
@@ -142,16 +149,14 @@ defmodule Elastic.Scroller do
   def handle_call(
         :next_page,
         _from,
-        state = %{index: index, body: body, keepalive: keepalive, scroll_id: scroll_id}
+        state = %{keepalive: keepalive, scroll_id: scroll_id, cluster: cluster}
       ) do
     scroll = %{
-      index: index,
-      body: body,
       scroll_id: scroll_id,
       keepalive: keepalive
     }
 
-    case scroll |> Scroll.next() do
+    case scroll |> Scroll.next(cluster) do
       {:ok, 200, %{"_scroll_id" => id, "hits" => %{"hits" => hits}}} ->
         state = state |> Map.merge(%{scroll_id: id, hits: hits})
         {:reply, {:ok, id}, state}
@@ -184,8 +189,12 @@ defmodule Elastic.Scroller do
     {:reply, keepalive, state}
   end
 
-  def handle_call(:clear, _from, state = %{scroll_id: scroll_id}) do
-    response = Scroll.clear([scroll_id])
+  def handle_call(:cluster, _from, state = %{cluster: cluster}) do
+    {:reply, cluster, state}
+  end
+
+  def handle_call(:clear, _from, state = %{scroll_id: scroll_id, cluster: cluster}) do
+    response = Scroll.clear([scroll_id], cluster)
     {:reply, response, state}
   end
 end

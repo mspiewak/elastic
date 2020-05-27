@@ -87,20 +87,22 @@ defmodule Elastic.HTTP do
     request(:post, "_bulk", options)
   end
 
-  defp base_url do
-    Elastic.base_url() || "http://localhost:9200"
+  defp base_url(cluster) do
+     Elastic.base_url(cluster)
   end
 
   defp request(method, url, options) do
     body = Keyword.get(options, :body, []) |> encode_body
+    cluster = Keyword.get(options, :cluster, nil)
     timeout = Application.get_env(:elastic, :timeout, 30_000)
-    url = URI.merge(base_url(), url)
+    url = URI.merge(base_url(cluster), url)
 
     options =
       options
       |> Keyword.put_new(:headers, Keyword.new())
       |> Keyword.put(:body, body)
       |> Keyword.put(:timeout, timeout)
+      |> Keyword.delete(:cluster)
       |> add_content_type_header
       |> add_aws_header(method, url, body)
       |> add_basic_auth

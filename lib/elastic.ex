@@ -39,8 +39,11 @@ defmodule Elastic do
   Elastic will then use the `AWSAuth` library to sign URLs for requests to this store.
   """
 
-  def base_url do
-    Application.get_env(:elastic, :base_url)
+  def base_url(cluster) do
+    case cluster do
+       nil -> Application.get_env(:elastic, :base_url, "http://localhost:9200")
+       _ -> Map.get(Application.get_env(:elastic, :clusters), cluster, "http://localhost:9200")
+    end
   end
 
   def basic_auth do

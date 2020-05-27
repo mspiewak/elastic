@@ -34,10 +34,10 @@ defmodule Elastic.Bulk do
 
     For more information see documentation on `Elastic.Bulk`.
   """
-  def index(documents) do
+  def index(documents, cluster \\ nil) do
     documents
     |> Enum.map(&index_or_create_document(&1, :index))
-    |> call_bulk_api
+    |> call_bulk_api(cluster)
   end
 
   @doc """
@@ -45,10 +45,10 @@ defmodule Elastic.Bulk do
 
     For more information see documentation on `Elastic.Bulk`.
   """
-  def create(documents) do
+  def create(documents, cluster \\ nil) do
     documents
     |> Enum.map(&index_or_create_document(&1, :create))
-    |> call_bulk_api
+    |> call_bulk_api(cluster)
   end
 
   @doc """
@@ -56,10 +56,10 @@ defmodule Elastic.Bulk do
 
     For more information see documentation on `Elastic.Bulk`.
   """
-  def update(documents) do
+  def update(documents, cluster \\ nil) do
     documents
     |> Enum.map(&update_document/1)
-    |> call_bulk_api
+    |> call_bulk_api(cluster)
   end
 
   defp index_or_create_document({index, type, id, document}, action) do
@@ -87,8 +87,8 @@ defmodule Elastic.Bulk do
     identifier(index, type, nil) |> Map.put(:_id, id)
   end
 
-  defp call_bulk_api(queries) do
+  defp call_bulk_api(queries, cluster) do
     queries = queries |> Enum.join("\n")
-    HTTP.bulk(body: queries)
+    HTTP.bulk(body: queries, cluster: cluster)
   end
 end

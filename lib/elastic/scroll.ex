@@ -27,9 +27,9 @@ defmodule Elastic.Scroll do
           required(:size) => pos_integer(),
           required(:keepalive) => String.t()
         }) :: {:ok, 200, map()} | {:error, 404, map()}
-  def start(%{index: index, body: body, size: size, keepalive: keepalive}) do
+  def start(%{index: index, body: body, size: size, keepalive: keepalive}, cluster \\ nil) do
     body = body |> Map.merge(%{size: size})
-    HTTP.get("#{Index.name(index)}/_search?scroll=#{keepalive}", body: body)
+    HTTP.get("#{Index.name(index)}/_search?scroll=#{keepalive}", body: body, cluster: cluster)
   end
 
   @doc ~S"""
@@ -46,8 +46,8 @@ defmodule Elastic.Scroll do
           required(:scroll_id) => String.t(),
           required(:keepalive) => String.t()
         }) :: {:ok, 200, map()} | {:error, 404, map()} | {:error, pos_integer(), map()}
-  def next(%{scroll_id: scroll_id, keepalive: keepalive}) do
-    HTTP.get(@scroll_endpoint, body: %{scroll_id: scroll_id, scroll: keepalive})
+  def next(%{scroll_id: scroll_id, keepalive: keepalive}, cluster \\ nil) do
+    HTTP.get(@scroll_endpoint, body: %{scroll_id: scroll_id, scroll: keepalive}, cluster: cluster)
   end
 
   @doc ~S"""
@@ -68,7 +68,7 @@ defmodule Elastic.Scroll do
   """
   @spec clear(String.t() | [String.t(), ...]) ::
           {:ok, 200, map()} | {:error, 404, map()} | {:error, pos_integer(), map()}
-  def clear(scroll_id) do
-    HTTP.delete(@scroll_endpoint, body: %{scroll_id: scroll_id})
+  def clear(scroll_id, cluster \\ nil) do
+    HTTP.delete(@scroll_endpoint, body: %{scroll_id: scroll_id}, cluster: cluster)
   end
 end
